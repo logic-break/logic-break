@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пятнашки</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            touch-action: manipulation;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #bb86fc;
+        }
+
+        .settings {
+            display: flex;
+            gap: 15px;
+        }
+
+        .language-selector {
+            display: flex;
+            gap: 8px;
+            background: #1e1e1e;
+            padding: 5px;
+            border-radius: 6px;
+        }
+
+        .lang-btn {
+            background: #333;
+            color: #e0e0e0;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .lang-btn:hover {
+            background: #444;
+        }
+
+        .lang-btn.active {
+            background: #bb86fc;
+            color: #121212;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .moves-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .moves, .time {
+            background: #1e1e1e;
+            padding: 10px 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .moves-value, .time-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #bb86fc;
+        }
+
+        .moves-label, .time-label {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        .fifteen-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 8px;
+            background-color: #2a2a2a;
+            border: 2px solid #2a2a2a;
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 1 / 1;
+            padding: 10px;
+            border-radius: 6px;
+            position: relative;
+        }
+
+        .tile {
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #121212;
+            user-select: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .tile:hover {
+            background-color: #f5f5f5;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .tile.moving {
+            transition: all 0.3s ease;
+        }
+
+        .empty {
+            background-color: #3a3a3a;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .empty:hover {
+            background-color: #3a3a3a;
+            transform: none;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+            cursor: default;
+        }
+
+        .game-status {
+            margin-top: 10px;
+            font-size: 1.1rem;
+            height: 24px;
+            text-align: center;
+        }
+
+        .game-won {
+            color: #4caf50;
+            font-weight: bold;
+            animation: pulse 1s infinite;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: #333;
+            color: #e0e0e0;
+            border: none;
+            padding: 12px 0;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .action-btn:hover {
+            background: #444;
+        }
+
+        .action-btn.primary {
+            background: #bb86fc;
+            color: #121212;
+        }
+
+        .action-btn.primary:hover {
+            background: #9d6ad8;
+        }
+
+        .instructions {
+            margin-top: 10px;
+            text-align: center;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes slide {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .slide-animation {
+            animation: slide 0.3s ease;
+        }
+
+        @media (max-width: 500px) {
+            .fifteen-board {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .settings {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .tile {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 id="title">Пятнашки</h1>
+            <div class="settings">
+                <div class="language-selector">
+                    <button class="lang-btn active" data-lang="ru">RU</button>
+                    <button class="lang-btn" data-lang="en">EN</button>
+                </div>
+            </div>
+        </header>
+        
+        <div class="game-info">
+            <div class="moves-container">
+                <div class="moves">
+                    <div class="moves-label" id="moves-label">Ходы</div>
+                    <div class="moves-value" id="moves">0</div>
+                </div>
+                <div class="time">
+                    <div class="time-label" id="time-label">Время</div>
+                    <div class="time-value" id="timer">00:00</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="fifteen-board" id="fifteen-board">
+            <!-- Плитки будут созданы через JS -->
+        </div>
+        
+        <div class="game-status" id="game-status"></div>
+        
+        <div class="controls">
+            <div class="action-buttons">
+                <button class="action-btn" id="hint-btn">Подсказка</button>
+                <button class="action-btn primary" id="new-game-btn">Новая игра</button>
+            </div>
+        </div>
+        
+        <div class="instructions" id="instructions">
+            Перемещайте плитки, чтобы расставить их по порядку
+        </div>
+    </div>
+
+    <script>
+        // Тексты на разных языках
+        const translations = {
+            ru: {
+                title: "Пятнашки",
+                moves: "Ходы",
+                time: "Время",
+                newGame: "Новая игра",
+                hint: "Подсказка",
+                complete: "Поздравляем! Вы собрали головоломку!",
+                instructions: "Перемещайте плитки, чтобы расставить их по порядку"
+            },
+            en: {
+                title: "15 Puzzle",
+                moves: "Moves",
+                time: "Time",
+                newGame: "New Game",
+                hint: "Hint",
+                complete: "Congratulations! You solved the puzzle!",
+                instructions: "Move tiles to arrange them in order"
+            }
+        };
+
+        // Текущий язык
+        let currentLanguage = 'ru';
+
+        // Элементы DOM
+        const titleElement = document.getElementById('title');
+        const movesElement = document.getElementById('moves');
+        const timerElement = document.getElementById('timer');
+        const movesLabelElement = document.getElementById('moves-label');
+        const timeLabelElement = document.getElementById('time-label');
+        const gameBoard = document.getElementById('fifteen-board');
+        const hintBtn = document.getElementById('hint-btn');
+        const newGameBtn = document.getElementById('new-game-btn');
+        const gameStatus = document.getElementById('game-status');
+        const instructionsElement = document.getElementById('instructions');
+        const langButtons = document.querySelectorAll('.lang-btn');
+
+        // Состояние игры
+        let board = [];
+        let emptyPos = { row: 3, col: 3 };
+        let moves = 0;
+        let gameTime = 0;
+        let timerInterval = null;
+        let gameActive = true;
+
+        // Размеры доски
+        const size = 4;
+
+        // Инициализация игры
+        function initGame() {
+            createBoard();
+            shuffleBoard();
+            startTimer();
+            updateUI();
+            renderBoard();
+            
+            // Добавляем обработчики событий
+            langButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setLanguage(btn.dataset.lang);
+                });
+            });
+            
+            newGameBtn.addEventListener('click', startNewGame);
+            hintBtn.addEventListener('click', giveHint);
+        }
+
+        // Создание игрового поля
+        function createBoard() {
+            gameBoard.innerHTML = '';
+            
+            // Создаем плитки от 1 до 15 и пустую
+            for (let i = 0; i < size; i++) {
+                board[i] = [];
+                for (let j = 0; j < size; j++) {
+                    const value = i * size + j + 1;
+                    
+                    if (value < 16) {
+                        const tile = document.createElement('div');
+                        tile.classList.add('tile');
+                        tile.textContent = value;
+                        tile.dataset.row = i;
+                        tile.dataset.col = j;
+                        tile.dataset.value = value;
+                        
+                        tile.addEventListener('click', () => moveTile(i, j));
+                        
+                        gameBoard.appendChild(tile);
+                        board[i][j] = value;
+                    } else {
+                        // Пустая плитка
+                        const empty = document.createElement('div');
+                        empty.classList.add('tile', 'empty');
+                        empty.dataset.row = i;
+                        empty.dataset.col = j;
+                        empty.dataset.value = 0;
+                        
+                        gameBoard.appendChild(empty);
+                        board[i][j] = 0;
+                        emptyPos = { row: i, col: j };
+                    }
+                }
+            }
+        }
+
+        // Перемешивание доски
+        function shuffleBoard() {
+            // Простой алгоритм перемешивания - делаем 1000 случайных ходов
+            for (let i = 0; i < 1000; i++) {
+                const directions = [
+                    { row: -1, col: 0 }, // вверх
+                    { row: 1, col: 0 },  // вниз
+                    { row: 0, col: -1 }, // влево
+                    { row: 0, col: 1 }   // вправо
+                ];
+                
+                const validMoves = directions.filter(dir => {
+                    const newRow = emptyPos.row + dir.row;
+                    const newCol = emptyPos.col + dir.col;
+                    return newRow >= 0 && newRow < size && newCol >= 0 && newCol < size;
+                });
+                
+                if (validMoves.length > 0) {
+                    const randomMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+                    const tileRow = emptyPos.row + randomMove.row;
+                    const tileCol = emptyPos.col + randomMove.col;
+                    
+                    // Меняем местами плитку и пустую клетку
+                    board[emptyPos.row][emptyPos.col] = board[tileRow][tileCol];
+                    board[tileRow][tileCol] = 0;
+                    emptyPos = { row: tileRow, col: tileCol };
+                }
+            }
+            
+            moves = 0;
+            updateMoves();
+        }
+
+        // Перемещение плитки
+        function moveTile(row, col) {
+            if (!gameActive) return;
+            
+            // Проверяем, можно ли переместить плитку (должна быть рядом с пустой)
+            if ((Math.abs(row - emptyPos.row) === 1 && col === emptyPos.col) ||
+                (Math.abs(col - emptyPos.col) === 1 && row === emptyPos.row)) {
+                
+                // Меняем местами плитку и пустую клетку
+                board[emptyPos.row][emptyPos.col] = board[row][col];
+                board[row][col] = 0;
+                
+                // Обновляем позицию пустой клетки
+                emptyPos = { row: row, col: col };
+                
+                // Увеличиваем счетчик ходов
+                moves++;
+                updateMoves();
+                
+                // Анимация перемещения
+                const tileElement = document.querySelector(`.tile[data-row="${row}"][data-col="${col}"]`);
+                tileElement.classList.add('moving');
+                setTimeout(() => tileElement.classList.remove('moving'), 300);
+                
+                // Перерисовываем доску
+                renderBoard();
+                
+                // Проверяем, решена ли головоломка
+                checkWin();
+            }
+        }
+
+        // Отрисовка доски
+        function renderBoard() {
+            // Удаляем все плитки
+            document.querySelectorAll('.tile').forEach(tile => tile.remove());
+            
+            // Создаем плитки заново с правильными позициями
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    const value = board[i][j];
+                    
+                    if (value !== 0) {
+                        const tile = document.createElement('div');
+                        tile.classList.add('tile');
+                        tile.textContent = value;
+                        tile.dataset.row = i;
+                        tile.dataset.col = j;
+                        tile.dataset.value = value;
+                        
+                        tile.addEventListener('click', () => moveTile(i, j));
+                        
+                        gameBoard.appendChild(tile);
+                    } else {
+                        // Пустая плитка
+                        const empty = document.createElement('div');
+                        empty.classList.add('tile', 'empty');
+                        empty.dataset.row = i;
+                        empty.dataset.col = j;
+                        empty.dataset.value = 0;
+                        
+                        gameBoard.appendChild(empty);
+                    }
+                }
+            }
+        }
+
+        // Проверка победы
+        function checkWin() {
+            let expected = 1;
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    if (i === size - 1 && j === size - 1) {
+                        // Последняя клетка должна быть пустой
+                        if (board[i][j] !== 0) return false;
+                    } else {
+                        if (board[i][j] !== expected) return false;
+                        expected++;
+                    }
+                }
+            }
+            
+            // Победа!
+            gameActive = false;
+            clearInterval(timerInterval);
+            gameStatus.textContent = translations[currentLanguage].complete;
+            gameStatus.classList.add('game-won');
+        }
+
+        // Подсказка
+        function giveHint() {
+            if (!gameActive) return;
+            
+            // Находим первую неправильно стоящую плитку
+            let expected = 1;
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    if (!(i === size - 1 && j === size - 1)) {
+                        if (board[i][j] !== expected) {
+                            // Подсвечиваем эту плитку
+                            const tile = document.querySelector(`.tile[data-value="${expected}"]`);
+                            if (tile) {
+                                tile.classList.add('slide-animation');
+                                setTimeout(() => tile.classList.remove('slide-animation'), 1000);
+                            }
+                            return;
+                        }
+                        expected++;
+                    }
+                }
+            }
+        }
+
+        // Обновление счетчика ходов
+        function updateMoves() {
+            movesElement.textContent = moves;
+        }
+
+        // Запуск таймера
+        function startTimer() {
+            gameTime = 0;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                gameTime++;
+                updateTimer();
+            }, 1000);
+        }
+
+        // Обновление таймера
+        function updateTimer() {
+            const minutes = Math.floor(gameTime / 60);
+            const seconds = gameTime % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Новая игра
+        function startNewGame() {
+            shuffleBoard();
+            startTimer();
+            gameActive = true;
+            gameStatus.textContent = '';
+            gameStatus.classList.remove('game-won');
+            renderBoard();
+        }
+
+        // Установка языка
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            
+            // Обновляем активную кнопку языка
+            langButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+            
+            // Обновляем тексты
+            updateUI();
+        }
+
+        // Обновление интерфейса
+        function updateUI() {
+            titleElement.textContent = translations[currentLanguage].title;
+            movesLabelElement.textContent = translations[currentLanguage].moves;
+            timeLabelElement.textContent = translations[currentLanguage].time;
+            hintBtn.textContent = translations[currentLanguage].hint;
+            newGameBtn.textContent = translations[currentLanguage].newGame;
+            instructionsElement.textContent = translations[currentLanguage].instructions;
+            
+            if (gameStatus.classList.contains('game-won')) {
+                gameStatus.textContent = translations[currentLanguage].complete;
+            }
+        }
+
+        // Запуск игры при загрузке страницы
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
