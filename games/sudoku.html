@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Судоку</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #bb86fc;
+        }
+
+        .settings {
+            display: flex;
+            gap: 15px;
+        }
+
+        .language-selector, .difficulty-selector {
+            display: flex;
+            gap: 8px;
+            background: #1e1e1e;
+            padding: 5px;
+            border-radius: 6px;
+        }
+
+        .lang-btn, .diff-btn {
+            background: #333;
+            color: #e0e0e0;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .lang-btn:hover, .diff-btn:hover {
+            background: #444;
+        }
+
+        .lang-btn.active, .diff-btn.active {
+            background: #bb86fc;
+            color: #121212;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .timer, .lives {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lives {
+            color: #ff5252;
+        }
+
+        .heart {
+            color: #ff5252;
+            font-size: 1.2rem;
+        }
+
+        .heart.empty {
+            color: #444;
+        }
+
+        .sudoku-board {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+            gap: 1px;
+            background-color: #333;
+            border: 2px solid #333;
+            width: 100%;
+            max-width: 450px;
+            aspect-ratio: 1 / 1;
+        }
+
+        .cell {
+            background-color: #1e1e1e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            user-select: none;
+        }
+
+        .cell:hover {
+            background-color: #252525;
+        }
+
+        .cell.selected {
+            background-color: #2a2a2a;
+        }
+
+        .cell.highlighted {
+            background-color: #2d2d2d;
+        }
+
+        .cell.same-number {
+            background-color: #3a2a4a;
+        }
+
+        .cell.error {
+            background-color: #4a2a2a;
+            color: #ff6b6b;
+            animation: shake 0.5s;
+        }
+
+        .cell.prefilled {
+            color: #bb86fc;
+            font-weight: bold;
+        }
+
+        .cell:nth-child(3n):not(:nth-child(9n)) {
+            border-right: 2px solid #333;
+        }
+
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 2px solid #333;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .number-pad {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .number-btn {
+            background: #333;
+            color: #e0e0e0;
+            border: none;
+            padding: 12px 0;
+            font-size: 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .number-btn:hover {
+            background: #444;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: #333;
+            color: #e0e0e0;
+            border: none;
+            padding: 12px 0;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .action-btn:hover {
+            background: #444;
+        }
+
+        .action-btn.primary {
+            background: #bb86fc;
+            color: #121212;
+        }
+
+        .action-btn.primary:hover {
+            background: #9d6ad8;
+        }
+
+        .action-btn:disabled {
+            background: #2a2a2a;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .game-status {
+            margin-top: 10px;
+            font-size: 1.1rem;
+            height: 24px;
+            text-align: center;
+        }
+
+        .game-over {
+            color: #ff5252;
+            font-weight: bold;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        @media (max-width: 500px) {
+            .sudoku-board {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .settings {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 id="title">Судоку</h1>
+            <div class="settings">
+                <div class="language-selector">
+                    <button class="lang-btn active" data-lang="ru">RU</button>
+                    <button class="lang-btn" data-lang="en">EN</button>
+                </div>
+                <div class="difficulty-selector">
+                    <button class="diff-btn active" data-diff="easy">Легко</button>
+                    <button class="diff-btn" data-diff="medium">Средне</button>
+                    <button class="diff-btn" data-diff="hard">Сложно</button>
+                </div>
+            </div>
+        </header>
+        
+        <div class="game-info">
+            <div class="timer" id="timer">00:00</div>
+            <div class="lives" id="lives">
+                <span class="heart">❤</span>
+                <span class="heart">❤</span>
+                <span class="heart">❤</span>
+            </div>
+        </div>
+        
+        <div class="sudoku-board" id="sudoku-board"></div>
+        
+        <div class="game-status" id="game-status"></div>
+        
+        <div class="controls">
+            <div class="number-pad" id="number-pad"></div>
+            <div class="action-buttons">
+                <button class="action-btn" id="undo-btn">Отменить</button>
+                <button class="action-btn" id="erase-btn">Стереть</button>
+                <button class="action-btn" id="hint-btn">Подсказка</button>
+                <button class="action-btn primary" id="new-game-btn">Новая игра</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Тексты на разных языках
+        const translations = {
+            ru: {
+                title: "Судоку",
+                difficulty: "Сложность",
+                easy: "Легкая",
+                medium: "Средняя",
+                hard: "Сложная",
+                undo: "Отменить",
+                erase: "Стереть",
+                hint: "Подсказка",
+                newGame: "Новая игра",
+                complete: "Поздравляем! Вы решили судоку!",
+                time: "Время",
+                lives: "Жизни",
+                gameOver: "Игра окончена! Начните новую игру.",
+                mistake: "Ошибка! Потеряна одна жизнь."
+            },
+            en: {
+                title: "Sudoku",
+                difficulty: "Difficulty",
+                easy: "Easy",
+                medium: "Medium",
+                hard: "Hard",
+                undo: "Undo",
+                erase: "Erase",
+                hint: "Hint",
+                newGame: "New Game",
+                complete: "Congratulations! You solved the sudoku!",
+                time: "Time",
+                lives: "Lives",
+                gameOver: "Game over! Start a new game.",
+                mistake: "Mistake! You lost one life."
+            }
+        };
+
+        // Текущий язык
+        let currentLanguage = 'ru';
+
+        // Элементы DOM
+        const titleElement = document.getElementById('title');
+        const timerElement = document.getElementById('timer');
+        const livesElement = document.getElementById('lives');
+        const sudokuBoard = document.getElementById('sudoku-board');
+        const numberPad = document.getElementById('number-pad');
+        const undoBtn = document.getElementById('undo-btn');
+        const eraseBtn = document.getElementById('erase-btn');
+        const hintBtn = document.getElementById('hint-btn');
+        const newGameBtn = document.getElementById('new-game-btn');
+        const gameStatus = document.getElementById('game-status');
+        const langButtons = document.querySelectorAll('.lang-btn');
+        const diffButtons = document.querySelectorAll('.diff-btn');
+
+        // Состояние игры
+        let board = [];
+        let solution = [];
+        let selectedCell = null;
+        let gameTime = 0;
+        let timerInterval = null;
+        let movesHistory = [];
+        let difficulty = 'easy';
+        let lives = 3;
+        let gameActive = true;
+
+        // Инициализация игры
+        function initGame() {
+            createBoard();
+            generateSudoku();
+            createNumberPad();
+            startTimer();
+            updateUI();
+            
+            // Добавляем обработчики событий
+            langButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setLanguage(btn.dataset.lang);
+                });
+            });
+            
+            diffButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setDifficulty(btn.dataset.diff);
+                });
+            });
+            
+            newGameBtn.addEventListener('click', startNewGame);
+            undoBtn.addEventListener('click', undoMove);
+            eraseBtn.addEventListener('click', eraseCell);
+            hintBtn.addEventListener('click', giveHint);
+        }
+
+        // Создание игрового поля
+        function createBoard() {
+            sudokuBoard.innerHTML = '';
+            for (let i = 0; i < 81; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i;
+                cell.addEventListener('click', () => selectCell(i));
+                sudokuBoard.appendChild(cell);
+            }
+        }
+
+        // Генерация судоку
+        function generateSudoku() {
+            // Создаем полностью заполненную доску
+            solution = generateSolvedBoard();
+            
+            // Создаем игровую доску, убирая некоторые числа в зависимости от сложности
+            board = JSON.parse(JSON.stringify(solution));
+            removeNumbersForDifficulty();
+            
+            // Отображаем доску
+            renderBoard();
+        }
+
+        // Генерация решенной доски
+        function generateSolvedBoard() {
+            const newBoard = Array(9).fill().map(() => Array(9).fill(0));
+            
+            // Заполняем диагональные блоки 3x3
+            for (let i = 0; i < 9; i += 3) {
+                fillBlock(newBoard, i, i);
+            }
+            
+            // Решаем остальную часть доски
+            solveSudoku(newBoard);
+            
+            return newBoard;
+        }
+
+        // Заполнение блока 3x3 случайными числами
+        function fillBlock(board, row, col) {
+            const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            shuffleArray(numbers);
+            
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    board[row + i][col + j] = numbers.pop();
+                }
+            }
+        }
+
+        // Алгоритм решения судоку
+        function solveSudoku(board) {
+            const emptyCell = findEmptyCell(board);
+            if (!emptyCell) return true;
+            
+            const [row, col] = emptyCell;
+            
+            for (let num = 1; num <= 9; num++) {
+                if (isValidMove(board, row, col, num)) {
+                    board[row][col] = num;
+                    
+                    if (solveSudoku(board)) {
+                        return true;
+                    }
+                    
+                    board[row][col] = 0;
+                }
+            }
+            
+            return false;
+        }
+
+        // Поиск пустой ячейки
+        function findEmptyCell(board) {
+            for (let row = 0; row < 9; row++) {
+                for (let col = 0; col < 9; col++) {
+                    if (board[row][col] === 0) {
+                        return [row, col];
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Проверка допустимости хода
+        function isValidMove(board, row, col, num) {
+            // Проверка строки
+            for (let i = 0; i < 9; i++) {
+                if (board[row][i] === num) return false;
+            }
+            
+            // Проверка столбца
+            for (let i = 0; i < 9; i++) {
+                if (board[i][col] === num) return false;
+            }
+            
+            // Проверка блока 3x3
+            const blockRow = Math.floor(row / 3) * 3;
+            const blockCol = Math.floor(col / 3) * 3;
+            
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[blockRow + i][blockCol + j] === num) return false;
+                }
+            }
+            
+            return true;
+        }
+
+        // Удаление чисел в зависимости от сложности
+        function removeNumbersForDifficulty() {
+            let cellsToRemove;
+            
+            switch(difficulty) {
+                case 'easy':
+                    cellsToRemove = 30;
+                    break;
+                case 'medium':
+                    cellsToRemove = 40;
+                    break;
+                case 'hard':
+                    cellsToRemove = 50;
+                    break;
+                default:
+                    cellsToRemove = 40;
+            }
+            
+            // Удаляем указанное количество чисел
+            for (let i = 0; i < cellsToRemove; i++) {
+                let row, col;
+                do {
+                    row = Math.floor(Math.random() * 9);
+                    col = Math.floor(Math.random() * 9);
+                } while (board[row][col] === 0);
+                
+                board[row][col] = 0;
+            }
+        }
+
+        // Перемешивание массива
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Отображение доски
+        function renderBoard() {
+            const cells = document.querySelectorAll('.cell');
+            for (let i = 0; i < 81; i++) {
+                const row = Math.floor(i / 9);
+                const col = i % 9;
+                const value = board[row][col];
+                
+                cells[i].textContent = value === 0 ? '' : value;
+                cells[i].classList.toggle('prefilled', value !== 0);
+                cells[i].classList.remove('error');
+            }
+        }
+
+        // Создание панели с цифрами
+        function createNumberPad() {
+            numberPad.innerHTML = '';
+            for (let i = 1; i <= 9; i++) {
+                const btn = document.createElement('button');
+                btn.classList.add('number-btn');
+                btn.textContent = i;
+                btn.addEventListener('click', () => fillCell(i));
+                numberPad.appendChild(btn);
+            }
+            
+            // Добавляем кнопку для очистки
+            const clearBtn = document.createElement('button');
+            clearBtn.classList.add('number-btn');
+            clearBtn.textContent = '✕';
+            clearBtn.addEventListener('click', eraseCell);
+            numberPad.appendChild(clearBtn);
+        }
+
+        // Выбор ячейки
+        function selectCell(index) {
+            if (!gameActive) return;
+            
+            const cells = document.querySelectorAll('.cell');
+            
+            // Снимаем выделение со всех ячеек
+            cells.forEach(cell => {
+                cell.classList.remove('selected', 'highlighted', 'same-number');
+            });
+            
+            // Выделяем выбранную ячейку
+            selectedCell = index;
+            cells[index].classList.add('selected');
+            
+            const row = Math.floor(index / 9);
+            const col = index % 9;
+            const value = board[row][col];
+            
+            // Подсвечиваем ячейки с тем же числом
+            if (value !== 0) {
+                cells.forEach((cell, i) => {
+                    const r = Math.floor(i / 9);
+                    const c = i % 9;
+                    if (board[r][c] === value) {
+                        cell.classList.add('same-number');
+                    }
+                });
+            }
+            
+            // Подсвечиваем строку, столбец и блок
+            highlightRelatedCells(row, col);
+        }
+
+        // Подсветка связанных ячеек
+        function highlightRelatedCells(row, col) {
+            const cells = document.querySelectorAll('.cell');
+            
+            // Подсвечиваем строку
+            for (let c = 0; c < 9; c++) {
+                const index = row * 9 + c;
+                if (index !== selectedCell) {
+                    cells[index].classList.add('highlighted');
+                }
+            }
+            
+            // Подсвечиваем столбец
+            for (let r = 0; r < 9; r++) {
+                const index = r * 9 + col;
+                if (index !== selectedCell) {
+                    cells[index].classList.add('highlighted');
+                }
+            }
+            
+            // Подсвечиваем блок 3x3
+            const blockRow = Math.floor(row / 3) * 3;
+            const blockCol = Math.floor(col / 3) * 3;
+            
+            for (let r = blockRow; r < blockRow + 3; r++) {
+                for (let c = blockCol; c < blockCol + 3; c++) {
+                    const index = r * 9 + c;
+                    if (index !== selectedCell) {
+                        cells[index].classList.add('highlighted');
+                    }
+                }
+            }
+        }
+
+        // Заполнение ячейки
+        function fillCell(value) {
+            if (!gameActive || selectedCell === null) return;
+            
+            const row = Math.floor(selectedCell / 9);
+            const col = selectedCell % 9;
+            
+            // Не позволяем изменять предзаполненные ячейки
+            if (board[row][col] !== 0) return;
+            
+            // Сохраняем ход в историю
+            movesHistory.push({
+                row: row,
+                col: col,
+                previousValue: board[row][col],
+                newValue: value
+            });
+            
+            // Обновляем доску
+            board[row][col] = value;
+            renderBoard();
+            
+            // Проверяем правильность
+            const isCorrect = checkCell(row, col);
+            
+            if (!isCorrect) {
+                // Ошибка - теряем жизнь
+                loseLife();
+            }
+            
+            // Проверяем, решена ли головоломка
+            if (isPuzzleSolved()) {
+                clearInterval(timerInterval);
+                gameStatus.textContent = translations[currentLanguage].complete;
+                gameStatus.style.color = '#4caf50';
+                gameActive = false;
+            }
+            
+            // Обновляем выделение
+            selectCell(selectedCell);
+        }
+
+        // Проверка ячейки
+        function checkCell(row, col) {
+            const value = board[row][col];
+            const index = row * 9 + col;
+            const cell = document.querySelector(`.cell[data-index="${index}"]`);
+            
+            // Если значение не соответствует решению, помечаем как ошибку
+            if (value !== 0 && value !== solution[row][col]) {
+                cell.classList.add('error');
+                return false;
+            } else {
+                cell.classList.remove('error');
+                return true;
+            }
+        }
+
+        // Потеря жизни
+        function loseLife() {
+            lives--;
+            updateLivesDisplay();
+            
+            // Показываем сообщение об ошибке
+            gameStatus.textContent = translations[currentLanguage].mistake;
+            gameStatus.style.color = '#ff5252';
+            
+            // Если жизни закончились
+            if (lives <= 0) {
+                gameActive = false;
+                clearInterval(timerInterval);
+                gameStatus.textContent = translations[currentLanguage].gameOver;
+                gameStatus.classList.add('game-over');
+                
+                // Отключаем кнопки
+                const numberBtns = document.querySelectorAll('.number-btn');
+                numberBtns.forEach(btn => {
+                    if (btn.textContent !== '✕') {
+                        btn.disabled = true;
+                    }
+                });
+            }
+        }
+
+        // Обновление отображения жизней
+        function updateLivesDisplay() {
+            const hearts = livesElement.querySelectorAll('.heart');
+            hearts.forEach((heart, index) => {
+                if (index < lives) {
+                    heart.classList.remove('empty');
+                } else {
+                    heart.classList.add('empty');
+                }
+            });
+        }
+
+        // Стирание ячейки
+        function eraseCell() {
+            if (!gameActive || selectedCell === null) return;
+            
+            const row = Math.floor(selectedCell / 9);
+            const col = selectedCell % 9;
+            
+            // Не позволяем изменять предзаполненные ячейки
+            if (board[row][col] !== 0) {
+                // Сохраняем ход в историю
+                movesHistory.push({
+                    row: row,
+                    col: col,
+                    previousValue: board[row][col],
+                    newValue: 0
+                });
+                
+                // Обновляем доску
+                board[row][col] = 0;
+                renderBoard();
+                
+                // Обновляем выделение
+                selectCell(selectedCell);
+            }
+        }
+
+        // Отмена хода
+        function undoMove() {
+            if (!gameActive || movesHistory.length === 0) return;
+            
+            const lastMove = movesHistory.pop();
+            board[lastMove.row][lastMove.col] = lastMove.previousValue;
+            renderBoard();
+            
+            // Обновляем выделение, если ячейка выбрана
+            if (selectedCell !== null) {
+                selectCell(selectedCell);
+            }
+        }
+
+        // Подсказка
+        function giveHint() {
+            if (!gameActive) return;
+            
+            // Находим первую пустую ячейку и заполняем её правильным значением
+            for (let i = 0; i < 81; i++) {
+                const row = Math.floor(i / 9);
+                const col = i % 9;
+                
+                if (board[row][col] === 0) {
+                    // Сохраняем ход в историю
+                    movesHistory.push({
+                        row: row,
+                        col: col,
+                        previousValue: 0,
+                        newValue: solution[row][col]
+                    });
+                    
+                    // Обновляем доску
+                    board[row][col] = solution[row][col];
+                    renderBoard();
+                    
+                    // Выбираем эту ячейку
+                    selectCell(i);
+                    break;
+                }
+            }
+        }
+
+        // Проверка, решена ли головоломка
+        function isPuzzleSolved() {
+            for (let row = 0; row < 9; row++) {
+                for (let col = 0; col < 9; col++) {
+                    if (board[row][col] !== solution[row][col]) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        // Запуск таймера
+        function startTimer() {
+            gameTime = 0;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                gameTime++;
+                updateTimer();
+            }, 1000);
+        }
+
+        // Обновление таймера
+        function updateTimer() {
+            const minutes = Math.floor(gameTime / 60);
+            const seconds = gameTime % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Новая игра
+        function startNewGame() {
+            generateSudoku();
+            startTimer();
+            selectedCell = null;
+            movesHistory = [];
+            lives = 3;
+            gameActive = true;
+            gameStatus.textContent = '';
+            gameStatus.classList.remove('game-over');
+            gameStatus.style.color = '#e0e0e0';
+            
+            // Включаем кнопки
+            const numberBtns = document.querySelectorAll('.number-btn');
+            numberBtns.forEach(btn => {
+                btn.disabled = false;
+            });
+            
+            // Снимаем выделение со всех ячеек
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.classList.remove('selected', 'highlighted', 'same-number', 'error');
+            });
+            
+            updateLivesDisplay();
+        }
+
+        // Установка языка
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            
+            // Обновляем активную кнопку языка
+            langButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+            
+            // Обновляем тексты
+            updateUI();
+        }
+
+        // Установка сложности
+        function setDifficulty(diff) {
+            difficulty = diff;
+            
+            // Обновляем активную кнопку сложности
+            diffButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.diff === diff);
+            });
+            
+            // Начинаем новую игру с выбранной сложностью
+            startNewGame();
+        }
+
+        // Обновление интерфейса
+        function updateUI() {
+            titleElement.textContent = translations[currentLanguage].title;
+            undoBtn.textContent = translations[currentLanguage].undo;
+            eraseBtn.textContent = translations[currentLanguage].erase;
+            hintBtn.textContent = translations[currentLanguage].hint;
+            newGameBtn.textContent = translations[currentLanguage].newGame;
+            timerElement.textContent = `${translations[currentLanguage].time}: 00:00`;
+            updateLivesDisplay();
+        }
+
+        // Запуск игры при загрузке страницы
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
