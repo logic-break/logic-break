@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>logic-break • Games</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'JetBrains Mono', monospace;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        .glitch {
+            font-size: 4rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            position: relative;
+            text-shadow: 0.05em 0 0 #00fffc, -0.03em -0.04em 0 #fc00ff,
+                         0.025em 0.04em 0 #fffc00;
+            animation: glitch 725ms infinite;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #bb86fc;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .terminal {
+            background: rgba(16, 16, 24, 0.95);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 40px 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background: #ff5f57; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #28ca42; }
+
+        .terminal-title {
+            margin-left: 15px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .terminal-content {
+            line-height: 1.6;
+        }
+
+        .prompt {
+            color: #bb86fc;
+            margin-right: 8px;
+        }
+
+        .command {
+            color: #4fc3f7;
+        }
+
+        .output {
+            color: #a5d6a7;
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .comment {
+            color: #888;
+            font-style: italic;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 50px 0;
+        }
+
+        .game-card {
+            background: rgba(22, 22, 32, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(187, 134, 252, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .game-card:hover::before {
+            left: 100%;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: #bb86fc;
+            box-shadow: 0 10px 30px rgba(187, 134, 252, 0.2);
+        }
+
+        .game-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #bb86fc;
+        }
+
+        .game-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .game-desc {
+            color: #aaa;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .qa-section {
+            margin-top: 60px;
+        }
+
+        .qa-item {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(22, 22, 32, 0.6);
+            border-radius: 8px;
+            border-left: 3px solid #bb86fc;
+        }
+
+        .question {
+            color: #4fc3f7;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .answer {
+            color: #e0e0e0;
+            line-height: 1.5;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .tech-item {
+            background: rgba(187, 134, 252, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #bb86fc;
+            border: 1px solid rgba(187, 134, 252, 0.3);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid #333;
+            color: #666;
+        }
+
+        @keyframes glitch {
+            0% {
+                text-shadow: 0.05em 0 0 #00fffc, -0.03em -0.04em 0 #fc00ff,
+                             0.025em 0.04em 0 #fffc00;
+            }
+            15% {
+                text-shadow: 0.05em 0 0 #00fffc, -0.03em -0.04em 0 #fc00ff,
+                             0.025em 0.04em 0 #fffc00;
+            }
+            16% {
+                text-shadow: -0.05em -0.025em 0 #00fffc, 0.025em 0.035em 0 #fc00ff,
+                             -0.05em -0.05em 0 #fffc00;
+            }
+            49% {
+                text-shadow: -0.05em -0.025em 0 #00fffc, 0.025em 0.035em 0 #fc00ff,
+                             -0.05em -0.05em 0 #fffc00;
+            }
+            50% {
+                text-shadow: 0.05em 0.035em 0 #00fffc, 0.03em 0 0 #fc00ff,
+                             0 -0.04em 0 #fffc00;
+            }
+            99% {
+                text-shadow: 0.05em 0.035em 0 #00fffc, 0.03em 0 0 #fc00ff,
+                             0 -0.04em 0 #fffc00;
+            }
+            100% {
+                text-shadow: -0.05em 0 0 #00fffc, -0.025em -0.04em 0 #fc00ff,
+                             -0.04em -0.025em 0 #fffc00;
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @media (max-width: 768px) {
+            .glitch {
+                font-size: 2.5rem;
+            }
+            
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .terminal {
+                padding: 20px;
+            }
+        }
+
+        /* Matrix rain effect */
+        .matrix-char {
+            position: absolute;
+            color: #0f0;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            opacity: 0;
+            animation: matrix-fall linear infinite;
+        }
+
+        @keyframes matrix-fall {
+            to {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-bg" id="matrixBg"></div>
+    
+    <div class="container">
+        <header class="header">
+            <h1 class="glitch">Logic-Break</h1>
+            <div class="subtitle">Developer • Gamer • Arch Linux Enjoyer • Vibecoder hater</div>
+        </header>
+
+        <div class="terminal floating">
+            <div class="terminal-header">
+                <div class="terminal-dots">
+                    <div class="dot dot-red"></div>
+                    <div class="dot dot-yellow"></div>
+                    <div class="dot dot-green"></div>
+                </div>
+                <div class="terminal-title">terminal — zsh</div>
+            </div>
+            <div class="terminal-content">
+                <div>
+                    <span class="prompt">λ</span>
+                    <span class="command">whoami</span>
+                </div>
+                <div class="output">logic-break (formerly maximum-arc)</div>
+                
+                <div style="margin-top: 15px;">
+                    <span class="prompt">λ</span>
+                    <span class="command">cat about.txt</span>
+                </div>
+                <div class="output">
+                    Ye hi there, I'm logic-break but I was maximum-arc,<br>
+                    I deleted my gmail so I can't use this account anymore.<br>
+                    There's some games I made for fun.<br><br>
+                    
+                    OS: Arch Linux (KDE Plasma) + Windows 10 LTSC<br>
+                    PC: RTX 4070, 32GB, NVME 1TB, Intel i5-13400f<br>
+                    Languages: Python, Lua, C#, C++, Brainf**k<br>
+                    Prefer: C++ for syntax<br><br>
+                    
+                    <span class="comment"># Sometimes developing Roblox scripts</span><br>
+                    <span class="comment"># Velocity/Solara user</span><br>
+                    <span class="comment"># Not a vibecoder - AI is my helper</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="games-grid">
+            <a href="https://logic-break.github.io/games/sudoku.html" class="game-card">
+                <div class="game-icon">🧩</div>
+                <div class="game-title">Sudoku</div>
+                <div class="game-desc">Classic number puzzle with multiple difficulty levels and language support</div>
+            </a>
+
+            <a href="https://logic-break.github.io/games/minesweeper.html" class="game-card">
+                <div class="game-icon">💣</div>
+                <div class="game-title">Minesweeper</div>
+                <div class="game-desc">Strategic mine detection game with lives system and multiple difficulties</div>
+            </a>
+
+            <a href="https://logic-break.github.io/games/gameof15.html" class="game-card">
+                <div class="game-icon">🔢</div>
+                <div class="game-title">15 Puzzle</div>
+                <div class="game-desc">Slide tiles in numerical order in this classic brain teaser</div>
+            </a>
+
+            <a href="https://logic-break.github.io/games/2048.html" class="game-card">
+                <div class="game-icon">⚡</div>
+                <div class="game-title">2048</div>
+                <div class="game-desc">Addictive number merging game with smooth animations</div>
+            </a>
+        </div>
+
+        <div class="qa-section">
+            <h2 style="color: #bb86fc; margin-bottom: 30px; text-align: center;">Q&A</h2>
+            
+            <div class="qa-item">
+                <div class="question">Q: What executor you use?</div>
+                <div class="answer">Velocity when working, or solara because it works anytime, why not xeno? it got no auto updates and unstable.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="question">Q: Why you installed arch?</div>
+                <div class="answer">Because i like it, i use KDE Plasma.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="question">Q: What is your native language?</div>
+                <div class="answer">Belarussian, but i prefer russian.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="question">Q: Why you switched to arch?</div>
+                <div class="answer">Because i dont like windows 11, its very laggy, many crashes, i used arch as main but i installed windows 10 only for roblox.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="question">Q: What pc you got?</div>
+                <div class="answer">RTX 4070, 32GB, NVME 1TB, Intel i5-13400f.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="question">Q: Why you made this site?</div>
+                <div class="answer">Idk ask chatgpt.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="question">Q: Are you a vibecoder?</div>
+                <div class="answer">No, i use AI as helper, not writer.</div>
+            </div>
+
+            <div class="qa-item">
+                <div class="question">Q: What programming languages yk?</div>
+                <div class="answer">Python, Lua, C#, C++(only syntaxis), brainf**k. I prefer c++ because of syntaxis.</div>
+            </div>
+        </div>
+
+        <div class="tech-stack">
+            <div class="tech-item">Arch Linux</div>
+            <div class="tech-item">KDE Plasma</div>
+            <div class="tech-item">Windows 10 LTSC</div>
+            <div class="tech-item">Python</div>
+            <div class="tech-item">Lua</div>
+            <div class="tech-item">C#</div>
+            <div class="tech-item">C++</div>
+            <div class="tech-item">Roblox Scripting</div>
+            <div class="tech-item">HTML/CSS/JS</div>
+        </div>
+
+        <footer class="footer">
+            <p>Made with 💜 by logic-break</p>
+            <p style="margin-top: 10px; font-size: 0.8rem; color: #444;">
+                Formerly maximum-arc • Arch Linux Enjoyer • Not a Vibecoder
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Matrix rain effect
+        function createMatrixRain() {
+            const chars = '01010101010101010101アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+            const bg = document.getElementById('matrixBg');
+            
+            for (let i = 0; i < 50; i++) {
+                const char = document.createElement('div');
+                char.className = 'matrix-char';
+                char.textContent = chars[Math.floor(Math.random() * chars.length)];
+                char.style.left = Math.random() * 100 + 'vw';
+                char.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                char.style.animationDelay = Math.random() * 5 + 's';
+                char.style.opacity = Math.random() * 0.5 + 0.1;
+                bg.appendChild(char);
+            }
+        }
+
+        // Glitch effect on hover
+        document.querySelectorAll('.game-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.animation = 'glitch 0.3s ease';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.animation = '';
+            });
+        });
+
+        // Initialize effects
+        document.addEventListener('DOMContentLoaded', function() {
+            createMatrixRain();
+            
+            // Add typing effect to terminal
+            const commands = document.querySelectorAll('.command');
+            commands.forEach((cmd, index) => {
+                cmd.style.animation = `typing 2s steps(${cmd.textContent.length}) ${index * 0.5}s both`;
+            });
+        });
+
+        // Add CSS for typing animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes typing {
+                from { width: 0; }
+                to { width: 100%; }
+            }
+            
+            .command {
+                overflow: hidden;
+                white-space: nowrap;
+                display: inline-block;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
