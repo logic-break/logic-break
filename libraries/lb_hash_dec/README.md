@@ -44,23 +44,23 @@ Import lb_hash_dec and use it
 **hint:** use import lb_hash_dec as lb
 # Usage:
 ### Encoding:
-.toMD5(string)
-.toSHA1(string)
-.toSHA256(string)
-.toSHA512(string)
-.toB64(string)
-.toB32(string)
-.toB85(string)
-.toAtbash(string)
-.toXOR(string, key)
-.toHex(string)
+- .to_MD5(string)
+- .to_SHA1(string)
+- .to_SHA256(string)
+- .to_SHA512(string)
+- .to_B64(string)
+- .to_B32(string)
+- .to_B85(string)
+- .to_Atbash(string)
+- .to_XOR(string, key)
+- .to_Hex(string)
 ### Decoding:
-.fromB64(string)
-.fromB32(string)
-.fromB85(string)
-.fromXOR(string, key)
-.fromAtbash(string)
-.fromHex(string)
+- .from_B64(string)
+- .from_B32(string)
+- .from_B85(string)
+- .from_XOR(string, key)
+- .from_Atbash(string)
+- .from_Hex(string)
 # Examples:
 1. Standard Hashing and Encoding
 ```
