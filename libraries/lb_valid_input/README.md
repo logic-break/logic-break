@@ -1,24 +1,39 @@
-Copyright (c) 2026 logic-break
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software for NON-COMMERCIAL PURPOSES ONLY, subject to the following 
-conditions:
+# lb_valid_input
+© Copyright logic-break 2026
 
-1. The above copyright notice and this permission notice shall be included in all
-   copies or substantial portions of the Software.
+https://github.com/logic-break/logic-break/tree/main/libraries/lb_valid_input
 
-2. The Software, or any substantial portion thereof, may NOT be sold, resold, 
-   licensed, or otherwise exploited for any commercial advantage or private 
-   monetary gain without prior written permission from the copyright holder.
+> lib made for lazy, by lazy  
 
-3. Any derivative works or software incorporating this Software must also be 
-   distributed under these same non-commercial terms.
+installation:
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+    pip install lb-valid-input
+
+**NOTE: in code, you must import lb_valid_input**
+
+
+# Usage:
+
+**`.numberinput(prompt, min_val, max_val)`** Safely gets a number (int/float). Prevents crashes from text input and checks optional min/max range.
+**`.choiceinput(question, choices)`** Asks a question with a list of options. Forces the user to pick one from the list (case-insensitive). 
+**`.choiceinput(question, choices)`** Asks a question with a list of options. Forces the user to pick one from the list (case-insensitive).
+
+# Example:
+```
+import lb_valid_input as lbi
+
+# It will ask "What do you want to do? (Deposit, Withdraw, Exit)"
+action = lbi.choiceinput("What do you want to do?", ["Deposit", "Withdraw", "Exit"])
+
+if action == "Deposit":
+    amount = lbi.numberinput("Enter amount to deposit: ", min_val=0.01)
+    print(f"Successfully deposited ${amount}")
+
+elif action == "Withdraw":
+    amount = lbi.rangeinput("Enter amount to withdraw (10-1000): ", 10, 1000)
+    print(f"Please take your ${amount}")
+
+else:
+    print("Goodbye!")
+```
